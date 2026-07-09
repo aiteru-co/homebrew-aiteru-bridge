@@ -6,7 +6,7 @@ A lightweight relay binary that tunnels requests from a small or remote device t
 
 `aiteru-bridge` runs on a computer that has Claude Code and/or the Codex CLI installed and authenticated. It exposes a small HTTP API that a remote device can call to send prompts and receive streamed replies, without the device ever needing its own API key or running the CLIs itself. Two connectivity modes are supported:
 
-- **Direct (LAN)**: the device reaches the bridge directly over the local network, no external service involved.
+- **Direct (LAN or VPN mesh)**: the device reaches the bridge directly over the local network, or over a mesh VPN that routes like an extended LAN rather than a standard single-exit-node VPN — recommended: NordVPN Meshnet or Tailscale.
 - **Relay (opt-in)**: the bridge dials out to a hosted relay over an authenticated, end-to-end encrypted WebSocket tunnel, so the device can reach it without port-forwarding or a static IP. The relay only ever forwards opaque encrypted envelopes — it never holds the key or sees message contents.
 
 Every request must carry a shared secret token; requests without a valid token are rejected before any CLI process is spawned.
