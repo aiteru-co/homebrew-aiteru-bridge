@@ -2,6 +2,7 @@
 
 A lightweight relay binary that tunnels requests from a small or remote device to Claude Code and Codex CLI sessions running on a full computer.
 
+
 ## How It Works
 
 `aiteru-bridge` runs on a computer that has Claude Code and/or the Codex CLI installed and authenticated. It exposes a small HTTP API that a remote device can call to send prompts and receive streamed replies, without the device ever needing its own API key or running the CLIs itself. Two connectivity modes are supported:
@@ -10,6 +11,7 @@ A lightweight relay binary that tunnels requests from a small or remote device t
 - **Relay (opt-in)**: the bridge dials out to a hosted relay over an authenticated, end-to-end encrypted WebSocket tunnel, so the device can reach it without port-forwarding or a static IP. The relay only ever forwards opaque encrypted envelopes — it never holds the key or sees message contents.
 
 Every request must carry a shared secret token; requests without a valid token are rejected before any CLI process is spawned.
+
 
 ## Installation
 
@@ -39,6 +41,7 @@ brew install aiteru-co/aiteru-bridge/aiteru-bridge
 
 1. Download `aiteru-bridge-<version>-windows-x86_64.zip` from the [releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
 2. Extract `aiteru-bridge.exe` to a folder of your choice.
+
 
 ## Usage
 
@@ -80,6 +83,7 @@ Endpoints:
 - `GET /codex/status` — polls a queued Codex run.
 - `GET /health` — health check.
 
+
 ## Configuration
 
 Settings can live in a TOML file instead of an environment variable, useful when running the bridge continuously in the background.
@@ -111,6 +115,7 @@ chip_id = "a1b2c3d4e5f6"
 | `relay.chip_id` | `RELAY_CHIP_ID` | none | Required if relay is enabled; identifies this bridge instance to the relay. |
 
 Environment variables always override the config file when both set a value.
+
 
 ## Starting Automatically
 
@@ -150,11 +155,13 @@ Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/l
    [Install]
    WantedBy=default.target
    ```
+
 2. Enable and start it:
    ```sh
    systemctl --user daemon-reload
    systemctl --user enable --now aiteru-bridge
    ```
+
 3. So it keeps running after you log out, not just while a session is open:
    ```sh
    loginctl enable-linger $USER
@@ -168,11 +175,13 @@ Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/l
 4. **Actions** tab → **New** → **Start a program** → browse to `aiteru-bridge.exe`.
 5. Save; enter your account password when prompted (required for "run whether logged on or not").
 
+
 ## Security
 
 - Every request requires the shared token; token comparison is constant-time to avoid leaking partial matches via response timing.
 - Bind the direct-connection port to a trusted LAN only; use relay mode (or your own TLS-terminating proxy) for any off-LAN reachability.
 - The bridge strips any `ANTHROPIC_API_KEY` from the environment it hands to child processes, so Claude Code always authenticates via the logged-in subscription rather than pay-per-use API billing.
+
 
 ## License
 
