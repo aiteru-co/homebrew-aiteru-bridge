@@ -109,7 +109,19 @@ Environment variables always override the config file when both set a value.
 
 By default, `aiteru-bridge` only runs while its terminal session is open. Set up the config file above (with at least `token` set) before doing any of the below — none of these methods pass environment variables for you.
 
-**macOS / Linux, via Homebrew:**
+**Let the bridge set it up for you:**
+
+```sh
+aiteru-bridge --enable-autostart
+```
+
+- **Linux**: registers a systemd `--user` service and enables lingering, so it starts at login and keeps running after logout.
+- **macOS**: registers a LaunchAgent. Refuses if `brew services` already manages `aiteru-bridge`, to avoid two copies fighting over the same port — run `brew services stop aiteru-bridge` first if you want to switch to this method.
+- **Windows**: registers a hidden Task Scheduler task that runs at logon with no visible console window. If this fails (restricted environment, missing permissions), fall back to the manual Task Scheduler steps below.
+
+Reverse any of these with `aiteru-bridge --disable-autostart`.
+
+**macOS / Linux, via Homebrew** (the alternative to `--enable-autostart` above, if you installed this way):
 
 ```sh
 brew services start aiteru-bridge
@@ -117,7 +129,7 @@ brew services start aiteru-bridge
 
 Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/log/aiteru-bridge.log`.
 
-**Linux without Homebrew**, using a systemd user service:
+**Linux without Homebrew, manually** (or if `--enable-autostart` isn't an option), using a systemd user service:
 
 1. Create `~/.config/systemd/user/aiteru-bridge.service`:
    ```ini
@@ -141,7 +153,7 @@ Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/l
    loginctl enable-linger $USER
    ```
 
-**Windows**, via Task Scheduler (runs hidden — no console window pops up):
+**Windows, manually** (if `--enable-autostart` failed), via Task Scheduler (runs hidden — no console window pops up):
 
 1. Open Task Scheduler (`Win+R` → `taskschd.msc`) → **Create Task** (not "Create Basic Task").
 2. **General** tab: name it, select **Run whether user is logged on or not**, and check **Hidden**.
