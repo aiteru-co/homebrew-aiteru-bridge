@@ -16,6 +16,13 @@ Every request must carry a shared secret token; requests without a valid token a
 **macOS**, and **Linux with Homebrew/Linuxbrew** installed:
 
 ```sh
+brew tap aiteru-co/aiteru-bridge
+brew install aiteru-bridge
+```
+
+Alternatively, as a single command:
+
+```sh
 brew install aiteru-co/aiteru-bridge/aiteru-bridge
 ```
 
