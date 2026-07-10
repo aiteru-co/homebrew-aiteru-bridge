@@ -1,7 +1,7 @@
 THIRD-PARTY OPEN SOURCE NOTICES
 
 aiteru-bridge is written in Rust and links the open-source crates listed below,
-resolved from server-bridge/Cargo.lock (generated via `cargo license`, license
+resolved from desktop-bridge/Cargo.lock (generated via `cargo license`, license
 identifiers as declared by each crate; license texts reproduced from the SPDX
 license-list-data project). Where a crate is dual-licensed with MIT as one option
 (most entries below), MIT is elected as the operative license for this notice.
