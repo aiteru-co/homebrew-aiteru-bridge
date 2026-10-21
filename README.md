@@ -10,7 +10,7 @@ A lightweight relay binary that tunnels requests from a small or remote device t
 - **Direct (LAN or VPN mesh)**: the device reaches the bridge directly over the local network, or over a mesh VPN that routes like an extended LAN rather than a standard single-exit-node VPN — recommended: NordVPN Meshnet or Tailscale.
 - **Relay (opt-in)**: the bridge dials out to a hosted relay over an authenticated, end-to-end encrypted WebSocket tunnel, so the device can reach it without port-forwarding or a static IP. The relay only ever forwards opaque encrypted envelopes — it never holds the key or sees message contents.
 
-Every request must carry a shared secret token; requests without a valid token are rejected before any CLI process is spawned.
+Calls from another machine must be sealed end to end with a key derived from the shared secret token, which itself never crosses the network; plaintext calls from another machine are refused, and calls from this machine need no token by default. Requests that fail these checks are rejected before any CLI process is spawned.
 
 
 ## Installation
@@ -42,10 +42,12 @@ brew install aiteru-co/aiteru-bridge/aiteru-bridge
 1. Download `aiteru-bridge-<version>-windows-x86_64.zip` from the [releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
 2. Extract `aiteru-bridge.exe` to a folder of your choice.
 
+Each release is documented on the [tap repository's releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
+
 
 ## Usage
 
-Pick a shared secret token — any random high-entropy string works, there's nothing to sign up for or retrieve from anywhere. Generate one:
+Pick a shared secret token: a random string of at least 32 characters. There's nothing to sign up for or retrieve from anywhere, and the bridge refuses to start with a shorter token. Generate one:
 
 ```sh
 # macOS / Linux
@@ -53,8 +55,8 @@ openssl rand -hex 32
 ```
 
 ```powershell
-# Windows PowerShell
--join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
+# Windows PowerShell (Get-Random is not a secure random source, so this uses the OS's)
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | ForEach-Object { '{0:x2}' -f $_ })
 ```
 
 Then run:
@@ -68,7 +70,7 @@ BRIDGE_TOKEN=<the-token-you-generated> aiteru-bridge
 $env:BRIDGE_TOKEN="<the-token-you-generated>"; .\aiteru-bridge.exe
 ```
 
-The bridge binds all network interfaces on port `4318` by default: `http://localhost:4318` from the same machine, or `http://<this-machine's-LAN-IP>:4318` from another device on the network. What's required to call it depends on where the request comes from, not which endpoint: calls from this same machine (`localhost`/`127.0.0.1`) need no token by default; calls from anywhere else on the network always need the token you generated above. Confirm it's up:
+The bridge binds all network interfaces on port `4318` by default: `http://localhost:4318` from the same machine, or `http://<this-machine's-LAN-IP>:4318` from another device on the network. What's required to call it depends on where the request comes from, not which endpoint: calls from this same machine (`localhost`/`127.0.0.1`) need no token by default; calls from anywhere else on the network must use the sealed routes, encrypted under a key derived from the token you generated above, as the Aiteru device does. Confirm it's up:
 
 ```sh
 curl http://localhost:4318/health
@@ -82,6 +84,7 @@ Endpoints:
 - `POST /codex/exec` — queues a Codex CLI run; poll `/codex/status` for progress.
 - `GET /codex/status` — polls a queued Codex run.
 - `GET /health` — health check.
+- `POST /sealed/ask`, `POST /sealed/codex_exec`, `POST /sealed/codex_status` — the same three calls, end-to-end encrypted, and the only routes another machine can use. See the main `README.md`'s Endpoints section for the format.
 
 Claude Code/Codex telemetry (OTLP) is also supported on this same port — see the main `README.md`'s OTLP Receiver section for setup; not covered here since it's an optional, more advanced setup than this quick-start.
 
@@ -100,7 +103,7 @@ Override with `--config <path>`. A missing file is not an error; a present-but-m
 
 ```toml
 port = 4318
-token = "your-shared-secret"
+token = "<the token you generated>"
 
 [relay]
 enabled = true
@@ -114,13 +117,13 @@ loopback_token = ""  # optional -- see the note above about localhost vs. LAN ca
 | Setting | Env var | Default | Notes |
 |---|---|---|---|
 | `port` | `BRIDGE_PORT` | `4318` | |
-| `token` | `BRIDGE_TOKEN` | none (required) | Bridge refuses to start without one set. Always required for calls from another machine on the network. |
+| `token` | `BRIDGE_TOKEN` | none (required) | Bridge refuses to start without one set, or with one shorter than 32 bytes. Calls from another machine on the network are encrypted with a key derived from it; it never crosses the network itself. |
 | `auth.loopback_token` | `LOOPBACK_TOKEN` | none | Optional. Unset (the default) means calls from this same machine need no token at all. |
 | `relay.enabled` | `RELAY_ENABLED` | `false` | Opt-in outbound tunnel; direct LAN mode otherwise. |
 | `relay.host` | `RELAY_HOST` | none | Required if relay is enabled. |
 | `relay.chip_id` | `RELAY_CHIP_ID` | none | Required if relay is enabled; identifies this bridge instance to the relay. |
 
-Environment variables always override the config file when both set a value.
+Environment variables always override the config file when both set a value. There is no TLS setting: `BRIDGE_TLS`, or `[tls]` with `enabled = true`, makes the bridge refuse to start.
 
 
 ## Starting Automatically
@@ -184,8 +187,9 @@ Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/l
 
 ## Security
 
-- Every request requires the shared token; token comparison is constant-time to avoid leaking partial matches via response timing.
-- Bind the direct-connection port to a trusted LAN only; use relay mode (or your own TLS-terminating proxy) for any off-LAN reachability.
+- Calls from another machine must be sealed with a key derived from the shared token and are refused in plaintext, even with the right token, since a token sent over plain HTTP could be read by anyone on the same network. The token never crosses the network. Calls from this machine need none unless `LOOPBACK_TOKEN` is set; token comparison is constant-time to avoid leaking partial matches via response timing.
+- Sealing doesn't provide forward secrecy: anyone who records traffic and later learns the token can read it. Use a random token and rotate it if it may have leaked, including after upgrading from a bridge that accepted plaintext calls from the network.
+- Use relay mode or a VPN mesh for off-LAN reachability rather than exposing the port to the internet.
 - The bridge strips any `ANTHROPIC_API_KEY` from the environment it hands to child processes, so Claude Code always authenticates via the logged-in subscription rather than pay-per-use API billing.
 
 
