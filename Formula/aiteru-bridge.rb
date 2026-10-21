@@ -1,16 +1,16 @@
 class AiteruBridge < Formula
   desc "Bridge relaying Claude Code / Codex CLI traffic to the Aiteru relay"
   homepage "https://github.com/aiteru-co/homebrew-aiteru-bridge"
-  version "0.1.6"
+  version "0.2.0"
 
   on_macos do
-    url "https://github.com/aiteru-co/homebrew-aiteru-bridge/releases/download/v0.1.6/aiteru-bridge-0.1.6-macos-universal.tar.gz"
-    sha256 "ba1ef3b03573f0a6a0570ebe3ab2ebf44d9826d9e8c7c4590d40e304ffcb0d6b"
+    url "https://github.com/aiteru-co/homebrew-aiteru-bridge/releases/download/v0.2.0/aiteru-bridge-0.2.0-macos-universal.tar.gz"
+    sha256 "ee0452220b2f9dc8a9621060bb9cca73d8fe30e77d536d192ba0e0c36c65ecf9"
   end
 
   on_linux do
-    url "https://github.com/aiteru-co/homebrew-aiteru-bridge/releases/download/v0.1.6/aiteru-bridge-0.1.6-linux-x86_64.tar.gz"
-    sha256 "7ec0f38ff749f789fb9c1b2b0b6856832907b29f14bbf75f1a2622fe672f1554"
+    url "https://github.com/aiteru-co/homebrew-aiteru-bridge/releases/download/v0.2.0/aiteru-bridge-0.2.0-linux-x86_64.tar.gz"
+    sha256 "a36bee8131ba8b6a35da6e24bf4d49b75b933456bf554248b6c28c19feab5e9b"
   end
 
   def install
