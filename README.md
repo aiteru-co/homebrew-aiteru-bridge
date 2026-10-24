@@ -118,7 +118,7 @@ loopback_token = ""  # optional -- see the note above about localhost vs. LAN ca
 |---|---|---|---|
 | `port` | `BRIDGE_PORT` | `4318` | |
 | `token` | `BRIDGE_TOKEN` | none (required) | Bridge refuses to start without one set, or with one shorter than 32 bytes. Calls from another machine on the network are encrypted with a key derived from it; it never crosses the network itself. |
-| `auth.loopback_token` | `LOOPBACK_TOKEN` | none | Optional. Unset (the default) means calls from this same machine need no token at all. |
+| `auth.loopback_token` | `LOOPBACK_TOKEN` | none | Optional. Unset (the default) means calls from this same machine present `BRIDGE_TOKEN`; set, it is the only token those calls accept. |
 | `relay.enabled` | `RELAY_ENABLED` | `false` | Opt-in outbound tunnel; direct LAN mode otherwise. |
 | `relay.host` | `RELAY_HOST` | none | Required if relay is enabled. |
 | `relay.chip_id` | `RELAY_CHIP_ID` | none | Required if relay is enabled; identifies this bridge instance to the relay. |
@@ -187,8 +187,8 @@ Stop with `brew services stop aiteru-bridge`. Logs go to `$(brew --prefix)/var/l
 
 ## Security
 
-- Calls from another machine must be sealed with a key derived from the shared token and are refused in plaintext, even with the right token, since a token sent over plain HTTP could be read by anyone on the same network. The token never crosses the network. Calls from this machine need none unless `LOOPBACK_TOKEN` is set; token comparison is constant-time to avoid leaking partial matches via response timing.
-- Sealing doesn't provide forward secrecy: anyone who records traffic and later learns the token can read it. Use a random token and rotate it if it may have leaked, including after upgrading from a bridge that accepted plaintext calls from the network.
+- Calls from another machine must be sealed with a key derived from the shared token and are refused in plaintext, even with the right token, since a token sent over plain HTTP could be read by anyone on the same network. The token never crosses the network. Calls from this machine must present the token too: `BRIDGE_TOKEN`, or `LOOPBACK_TOKEN` when set; token comparison is constant-time to avoid leaking partial matches via response timing.
+- Each session's key comes from an ephemeral exchange, so a token learned later doesn't decrypt traffic that was already recorded. The token still authenticates new sessions: anyone holding it can impersonate this bridge or the device in a handshake. Use a random token and rotate it if it may have leaked, including after upgrading from a bridge that accepted plaintext calls from the network.
 - Use relay mode or a VPN mesh for off-LAN reachability rather than exposing the port to the internet.
 - The bridge strips any `ANTHROPIC_API_KEY` from the environment it hands to child processes, so Claude Code always authenticates via the logged-in subscription rather than pay-per-use API billing.
 
