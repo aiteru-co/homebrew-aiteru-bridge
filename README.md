@@ -37,10 +37,23 @@ brew install aiteru-co/aiteru-bridge/aiteru-bridge
    sudo mv aiteru-bridge /usr/local/bin/
    ```
 
+**macOS without Homebrew:**
+
+1. Download `aiteru-bridge-<version>-macos-universal.tar.gz` from the [releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
+2. Extract it and place the binary on your `PATH`:
+   ```sh
+   tar -xzf aiteru-bridge-*-macos-universal.tar.gz
+   sudo mv aiteru-bridge /usr/local/bin/
+   ```
+
+The binary isn't signed yet, so macOS blocks it on first launch. Allow it once with `xattr -d com.apple.quarantine /usr/local/bin/aiteru-bridge`, or under System Settings, Privacy & Security, **Open Anyway**.
+
 **Windows** (no Homebrew build exists for this platform):
 
 1. Download `aiteru-bridge-<version>-windows-x86_64.zip` from the [releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
 2. Extract `aiteru-bridge.exe` to a folder of your choice.
+
+Windows SmartScreen may warn that the publisher is unknown, because the binary isn't code-signed yet. Choose **More info**, then **Run anyway**.
 
 Each release is documented on the [tap repository's releases page](https://github.com/aiteru-co/homebrew-aiteru-bridge/releases).
 
